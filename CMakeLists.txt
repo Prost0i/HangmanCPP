@@ -8,5 +8,11 @@ if (MINGW)
 endif()
 
 add_executable(hangmancpp main.cpp)
-target_compile_options(hangmancpp PRIVATE -Wall -Wextra -pedantic -Werror)
+
+if (MSVC)
+    target_compile_options(hangmancpp PRIVATE /W4 /WX)
+else()
+    target_compile_options(hangmancpp PRIVATE -Wall -Wextra -pedantic -Werror)
+endif()
+
 set_property(TARGET hangmancpp PROPERTY CXX_STANDARD 20)
