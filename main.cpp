@@ -77,10 +77,11 @@ class UnixScreen : public Screen {
 		}
 
 		size_t write(const char *str) override {
+			size_t bytes_written = 0;
 			::write(STDOUT_FILENO, "\033[H", 3);
-			::write(STDOUT_FILENO, str, std::strlen(str));
+			bytes_written += ::write(STDOUT_FILENO, str, std::strlen(str));
 
-			return 0;
+			return bytes_written;
 		}
 
 	private:
