@@ -11,7 +11,17 @@
 
 class Console {
 	public:
+		enum class Key {
+			A,
+			B,
+			E,
+			Q,
+			Escape,
+			Unknown,
+		};
+
 		virtual size_t write(const char *str) = 0;
+		virtual Key get_key() = 0;
 };
 
 #ifdef _WIN32
@@ -84,14 +94,67 @@ class UnixConsole : public Console {
 			return bytes_written;
 		}
 
+		Key get_key() override {
+			char c = 0;
+			read(STDIN_FILENO, &c, 1);
+
+			switch (c) {
+				case 'a':
+					return Key::A;
+				case 'b':
+					return Key::B;
+				case 'e':
+					return Key::E;
+				case 'q':
+					return Key::Q;
+			}
+
+			if (c == '\033') {
+				char seq[2] = {0};
+
+				read(STDIN_FILENO, &seq[0], 1);
+				read(STDIN_FILENO, &seq[1], 1);
+
+				if (seq[0] == '\0') {
+					return Key::Escape;
+				}
+			}
+
+			return Key::Unknown;
+		}
+
 	private:
 		struct termios orig_termios_;
 };
 #endif
 
 void main_loop(Console *console) {
-	console->write("Hello, world");
-	std::this_thread::sleep_for(std::chrono::seconds(1));
+	std::string str = "Hello, world";
+
+	Console::Key key = Console::Key::Unknown;
+	bool run = true;
+	while (run) {
+		key = console->get_key();
+
+		switch (key) {
+			case Console::Key::E:
+			case Console::Key::Q:
+			case Console::Key::Escape:
+				run = false;
+				break;
+			case Console::Key::A:
+				str = "Hello, world";
+				break;
+			case Console::Key::B:
+				str = "World, hello";
+				break;
+
+			default:
+				break;
+		}
+
+		console->write(str.c_str());
+	}
 }
 
 int main() {
