@@ -9,15 +9,15 @@
 #include <thread>
 #include <cstring>
 
-class Screen {
+class Console {
 	public:
 		virtual size_t write(const char *str) = 0;
 };
 
 #ifdef _WIN32
-class Win32Screen : public Screen {
+class Win32Console : public Console {
 	public:
-		Win32Screen():
+		Win32Console():
 			win32_console_handle_(CreateConsoleScreenBuffer(GENERIC_READ | GENERIC_WRITE, 0, NULL,
 						CONSOLE_TEXTMODE_BUFFER, NULL)) {
 				SetConsoleActiveScreenBuffer(win32_console_handle_);
@@ -25,7 +25,7 @@ class Win32Screen : public Screen {
 				toggle_cursor(false);
 			}
 
-		~Win32Screen() {
+		~Win32Console() {
 			toggle_cursor(true);
 			CloseHandle(win32_console_handle_);
 		}
@@ -51,9 +51,9 @@ class Win32Screen : public Screen {
 		HANDLE win32_console_handle_;
 };
 #else
-class UnixScreen : public Screen {
+class UnixConsole : public Console {
 	public:
-		UnixScreen() {
+		UnixConsole() {
 			tcgetattr(STDIN_FILENO, &orig_termios_);
 
 			struct termios raw = orig_termios_;
@@ -70,7 +70,7 @@ class UnixScreen : public Screen {
 
 		}
 
-		~UnixScreen() {
+		~UnixConsole() {
 			::write(STDOUT_FILENO, "\033[?1049l", 8);
 			::write(STDOUT_FILENO, "\033[?25h", 6);
 			tcsetattr(STDIN_FILENO, TCSAFLUSH, &orig_termios_);
@@ -89,24 +89,18 @@ class UnixScreen : public Screen {
 };
 #endif
 
-void main_loop(Screen *screen) {
-	screen->write("Hello, world");
-	std::this_thread::sleep_for(std::chrono::seconds(1));
-	screen->write("World, hello");
-	std::this_thread::sleep_for(std::chrono::seconds(1));
-	screen->write("Hello, hello");
-	std::this_thread::sleep_for(std::chrono::seconds(1));
-	screen->write("World, world");
+void main_loop(Console *console) {
+	console->write("Hello, world");
 	std::this_thread::sleep_for(std::chrono::seconds(1));
 }
 
 int main() {
 #ifdef _WIN32
-	Win32Screen screen = Win32Screen();
+	Win32Console console = Win32Console();
 #else
-	UnixScreen screen = UnixScreen();
+	UnixConsole console = UnixConsole();
 #endif
-	main_loop(&screen);
+	main_loop(&console);
 
 	return 0;
 }
