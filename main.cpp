@@ -21,6 +21,7 @@ class Console {
 		};
 
 		virtual size_t write(const char *str) = 0;
+		virtual void clear() = 0;
 		virtual Key get_key() = 0;
 };
 
@@ -88,10 +89,14 @@ class UnixConsole : public Console {
 
 		size_t write(const char *str) override {
 			size_t bytes_written = 0;
-			::write(STDOUT_FILENO, "\033[H", 3);
+			clear();
 			bytes_written += ::write(STDOUT_FILENO, str, std::strlen(str));
 
 			return bytes_written;
+		}
+
+		void clear() override {
+			::write(STDOUT_FILENO, "\033[H", 3);
 		}
 
 		Key get_key() override {
@@ -153,6 +158,7 @@ void main_loop(Console *console) {
 				break;
 		}
 
+		console->clear();
 		console->write(str.c_str());
 	}
 }
