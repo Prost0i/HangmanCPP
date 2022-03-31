@@ -9,6 +9,8 @@
 #include <thread>
 #include <cstring>
 
+#include "hangman_frames.h"
+
 class Console {
 	public:
 		enum class Key {
@@ -134,8 +136,7 @@ class UnixConsole : public Console {
 #endif
 
 void main_loop(Console *console) {
-	std::string str = "Hello, world";
-
+	int frame = 0;
 	Console::Key key = Console::Key::Unknown;
 	bool run = true;
 	while (run) {
@@ -148,10 +149,14 @@ void main_loop(Console *console) {
 				run = false;
 				break;
 			case Console::Key::A:
-				str = "Hello, world";
+				if (frame > 0) {
+					--frame;
+				}
 				break;
 			case Console::Key::B:
-				str = "World, hello";
+				if (frame < 6) {
+					++frame;
+				}
 				break;
 
 			default:
@@ -159,7 +164,7 @@ void main_loop(Console *console) {
 		}
 
 		console->clear();
-		console->write(str.c_str());
+		console->write(hangman_frames[frame]);
 	}
 }
 
