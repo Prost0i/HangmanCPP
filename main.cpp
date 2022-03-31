@@ -14,17 +14,16 @@
 class Console {
 	public:
 		enum class Key {
-			A,
-			B,
-			E,
-			Q,
+			Char,
 			Escape,
 			Unknown,
 		};
 
+		using KeyValue = std::pair<Console::Key, char>;
+
 		virtual size_t write(const char *str) = 0;
 		virtual void clear() = 0;
-		virtual Key get_key() = 0;
+		virtual KeyValue get_key() = 0;
 };
 
 #ifdef _WIN32
@@ -101,19 +100,12 @@ class UnixConsole : public Console {
 			::write(STDOUT_FILENO, "\033[H", 3);
 		}
 
-		Key get_key() override {
+		KeyValue get_key() override {
 			char c = 0;
 			read(STDIN_FILENO, &c, 1);
 
-			switch (c) {
-				case 'a':
-					return Key::A;
-				case 'b':
-					return Key::B;
-				case 'e':
-					return Key::E;
-				case 'q':
-					return Key::Q;
+			if (c >= 'a' && c <= 'z') {
+				return std::make_pair(Key::Char, c);
 			}
 
 			if (c == '\033') {
@@ -123,11 +115,11 @@ class UnixConsole : public Console {
 				read(STDIN_FILENO, &seq[1], 1);
 
 				if (seq[0] == '\0') {
-					return Key::Escape;
+					return std::make_pair(Key::Escape, 0);
 				}
 			}
 
-			return Key::Unknown;
+			return std::make_pair(Key::Unknown, 0);
 		}
 
 	private:
@@ -136,35 +128,49 @@ class UnixConsole : public Console {
 #endif
 
 void main_loop(Console *console) {
-	int frame = 0;
-	Console::Key key = Console::Key::Unknown;
+	std::string frame;
+	frame.reserve(200);
+
+	int hangman_frame_counter = 0;
+	Console::Key key_type = Console::Key::Unknown;
+	char key_char = 0;
 	bool run = true;
 	while (run) {
-		key = console->get_key();
+		frame.clear();
+		Console::KeyValue key_value = console->get_key();
+		key_type = key_value.first;
+		key_char = key_value.second;
 
-		switch (key) {
-			case Console::Key::E:
-			case Console::Key::Q:
-			case Console::Key::Escape:
+		if (key_type != Console::Key::Char) {
+			if (key_type == Console::Key::Escape) {
 				run = false;
-				break;
-			case Console::Key::A:
-				if (frame > 0) {
-					--frame;
-				}
-				break;
-			case Console::Key::B:
-				if (frame < 6) {
-					++frame;
-				}
-				break;
+			}
+		} else {
+			switch (key_char) {
+				case 'q':
+					run = false;
+					break;
+				case 'a':
+					if (hangman_frame_counter > 0) {
+						--hangman_frame_counter;
+					}
+					break;
+				case 'b':
+					if (hangman_frame_counter < 6) {
+						++hangman_frame_counter;
+					}
+					break;
 
-			default:
-				break;
+				default:
+					break;
+			}
+
 		}
 
+		frame.append(hangman_frames[hangman_frame_counter]);
+
 		console->clear();
-		console->write(hangman_frames[frame]);
+		console->write(frame.c_str());
 	}
 }
 
