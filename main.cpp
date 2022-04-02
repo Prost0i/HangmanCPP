@@ -1,4 +1,4 @@
-#include "hangman_frames.h"
+#include "hangman_status.h"
 #include "console.h"
 
 #include <string>
@@ -7,8 +7,8 @@ void main_loop(Console *console) {
 	std::string frame;
 	frame.reserve(200);
 
-	int hangman_frame_counter = 0;
 	Console::Key key_type = Console::Key::Unknown;
+	HangmanStatus hstatus;
 	char key_char = 0;
 	bool run = true;
 	while (run) {
@@ -23,27 +23,17 @@ void main_loop(Console *console) {
 			}
 		} else {
 			switch (key_char) {
+				case 'a':
+				case 'b':
+					hstatus.increase_counter();
+					break;
 				case 'q':
 					run = false;
 					break;
-				case 'a':
-					if (hangman_frame_counter > 0) {
-						--hangman_frame_counter;
-					}
-					break;
-				case 'b':
-					if (hangman_frame_counter < 6) {
-						++hangman_frame_counter;
-					}
-					break;
-
-				default:
-					break;
 			}
-
 		}
 
-		frame.append(hangman_frames[hangman_frame_counter]);
+		frame.append(hstatus.return_state());
 
 		console->clear();
 		console->write(frame.c_str());
