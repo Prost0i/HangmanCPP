@@ -7,7 +7,7 @@ if (MINGW)
     set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -Wl,-Bstatic,--whole-archive -lwinpthread -Wl,--no-whole-archive")
 endif()
 
-add_executable(hangmancpp main.cpp console.cpp hangman_status.cpp)
+add_executable(hangmancpp main.cpp console.cpp hangman_status.cpp secret_word.cpp)
 
 if (MSVC)
     target_compile_options(hangmancpp PRIVATE /W4 /WX)
