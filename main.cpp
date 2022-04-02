@@ -4,20 +4,30 @@
 
 #include <thread>
 #include <chrono>
+#include <random>
+#include <fstream>
+#include <sstream>
 
 #define ARRAY_SIZE(arr) (sizeof(arr)/sizeof(arr[0]))
 
 const int ATTEMPTS_COUNT = 6;
 static_assert(ATTEMPTS_COUNT+1 == ARRAY_SIZE(hangman_frames));
 
-void main_loop(Console *console) {
+std::string peak_random_word(const std::vector<std::string>& words) {
+	std::mt19937 generator(std::random_device{}());
+	std::uniform_int_distribution<std::size_t> distribution(0, words.size() - 1);
+
+	return words[distribution(generator)];
+}
+
+void main_loop(Console *console, const std::vector<std::string>& words) {
 	std::string frame;
 	frame.reserve(200);
 
 	Console::Key key_type = Console::Key::Unknown;
 	char key_char = 0;
 
-	SecretWord sword("hello");
+	SecretWord sword(peak_random_word(words).c_str());
 	int attempts = 0;
 
 	bool run = true;
@@ -68,13 +78,37 @@ void main_loop(Console *console) {
 	}
 }
 
+void split_words(std::vector<std::string> &result_words, std::string &text, const std::string &delimiter) {
+	size_t pos = 0;
+	while ((pos = text.find(delimiter)) != std::string::npos) {
+		result_words.push_back(text.substr(0, pos));
+		text.erase(0, pos + delimiter.length());
+	}
+}
+
+std::string read_file_into_string(const std::string &path) {
+	auto ss = std::ostringstream{};
+	std::ifstream input_file(path);
+	if (!input_file.is_open()) {
+		std::cerr << "Could not open the file - '" << path << "'\n";
+		exit(EXIT_FAILURE);
+	}
+	ss << input_file.rdbuf();
+	return ss.str();
+}
+
 int main() {
+	std::string words_file_contents = read_file_into_string("words.txt");
+	std::vector<std::string> words;
+	split_words(words, words_file_contents, "\n");
+
 #ifdef _WIN32
 	Win32Console console = Win32Console();
 #else
 	UnixConsole console = UnixConsole();
 #endif
-	main_loop(&console);
+
+	main_loop(&console, words);
 
 	return 0;
 }
