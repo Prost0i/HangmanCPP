@@ -115,11 +115,7 @@ int main() {
 	std::vector<std::string> words;
 	split_words(words, words_file_contents, "\n");
 
-#ifdef _WIN32
-	Win32Console console = Win32Console();
-#else
 	UnixConsole console = UnixConsole();
-#endif
 
 	main_loop(&console, words);
 

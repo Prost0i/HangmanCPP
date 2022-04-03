@@ -3,14 +3,7 @@
 
 #include <iostream>
 
-#ifdef _WIN32
-#include <windows.h>
-#elif __unix__
 #include <termios.h>
-#else
-#error "Unknown operating system!"
-#endif
-
 #include <cstring>
 
 class Console {
@@ -28,23 +21,6 @@ class Console {
 		virtual KeyValue get_key() = 0;
 };
 
-#ifdef _WIN32 // Windows
-
-class Win32Console : public Console {
-	public:
-		Win32Console();
-		~Win32Console();
-
-		size_t write(const char *str) override;
-	private:
-		void toggle_cursor(bool show_flag);
-		HANDLE win32_console_handle_;
-};
-
-// Windows
-
-#elif __unix__ // Unix
-
 class UnixConsole : public Console {
 	public:
 		UnixConsole();
@@ -57,12 +33,6 @@ class UnixConsole : public Console {
 	private:
 		struct termios orig_termios_;
 };
-
-// Unix
-
-#else
-#error "Unknown operating system!"
-#endif
 
 #endif // CONSOLE_H__
 

@@ -2,42 +2,6 @@
 
 #include <unistd.h>
 
-#ifdef _WIN32 // Windows
-
-Win32Console::Win32Console() :
-	win32_console_handle_(CreateConsoleScreenBuffer(GENERIC_READ | GENERIC_WRITE, 0, NULL,
-				CONSOLE_TEXTMODE_BUFFER, NULL)) {
-		SetConsoleActiveScreenBuffer(win32_console_handle_);
-
-		toggle_cursor(false);
-	}
-
-Win32Console::~Win32Console() {
-	toggle_cursor(true);
-	CloseHandle(win32_console_handle_);
-}
-
-size_t Win32Console::write(const char *str) {
-	const COORD zero_coord = { 0, 0 };
-	DWORD bytes_written = 0;
-	WriteConsoleOutputCharacter(win32_console_handle_, str,
-			std::strlen(str), zero_coord, &bytes_written);
-
-	return bytes_written;
-}
-
-void Win32Console::toggle_cursor(bool show_flag) {
-	HANDLE out = GetStdHandle(STD_OUTPUT_HANDLE);
-	CONSOLE_CURSOR_INFO cursor_info;
-	GetConsoleCursorInfo(out, &cursor_info);
-	cursor_info.bVisible = show_flag;
-	SetConsoleCursorInfo(out, &cursor_info);
-}
-
-// Windows
-
-#elif __unix__ // Unix
-
 UnixConsole::UnixConsole() {
 	tcgetattr(STDIN_FILENO, &orig_termios_);
 
@@ -93,9 +57,3 @@ UnixConsole::KeyValue UnixConsole::get_key() {
 
 	return std::make_pair(Key::Unknown, 0);
 }
-
-// Unix
-
-#else
-#error "Unknown operating system!"
-#endif
