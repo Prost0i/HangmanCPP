@@ -11,6 +11,7 @@
 #define ARRAY_SIZE(arr) (sizeof(arr)/sizeof(arr[0]))
 
 const int ATTEMPTS_COUNT = 6;
+const double FPSMAX = 1000.0/15.0;
 static_assert(ATTEMPTS_COUNT+1 == ARRAY_SIZE(hangman_frames));
 
 std::string peak_random_word(const std::vector<std::string>& words) {
@@ -31,7 +32,9 @@ void main_loop(Console *console, const std::vector<std::string>& words) {
 	int attempts = 0;
 
 	bool run = true;
+	auto start_timer = std::chrono::high_resolution_clock::now();
 	while (run) {
+
 		frame.clear();
 
 		Console::KeyValue key_value = console->get_key();
@@ -74,6 +77,16 @@ void main_loop(Console *console, const std::vector<std::string>& words) {
 
 			run = false;
 			std::this_thread::sleep_for(std::chrono::seconds(1));
+		}
+
+		auto end_timer = std::chrono::high_resolution_clock::now();
+		std::chrono::duration<double, std::milli> delta = end_timer - start_timer;
+		start_timer = end_timer;
+
+		if (delta.count() < FPSMAX) {
+			std::chrono::duration<double, std::milli> delta_ms(FPSMAX - delta.count());
+			auto delta_ms_duration = std::chrono::duration_cast<std::chrono::milliseconds>(delta_ms);
+			std::this_thread::sleep_for(std::chrono::milliseconds(delta_ms_duration.count()));
 		}
 	}
 }
